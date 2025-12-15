@@ -34,7 +34,6 @@ function startGame() {
 let touchX = null;
 
 function handleTouch(e) {
-  e.preventDefault();
   const touch = e.touches[0];
   const rect = game.getBoundingClientRect();
   touchX = touch.clientX - rect.left;
