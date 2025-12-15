@@ -1,10 +1,4 @@
 body {
-  touch-action: none; /* スクロール完全無効 */
+  touch-action: none;
   overscroll-behavior: none;
-}
-
-#player {
-  position: absolute;
-  bottom: 20px;
-  width: 90px;   /* 大きめで操作しやすく */
 }
