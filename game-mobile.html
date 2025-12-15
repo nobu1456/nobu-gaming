@@ -8,9 +8,8 @@
 <style>
 body {
   margin: 0;
-  overflow: hidden;
   background: #000;
-  touch-action: none;
+  overscroll-behavior: none;
 }
 
 #game {
@@ -18,6 +17,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  touch-action: none;
 }
 
 #player {
@@ -39,23 +39,28 @@ body {
   top: -40px;
 }
 
-#score {
+/* HUD */
+#hud {
   position: fixed;
   top: 10px;
+  left: 12px;
   right: 12px;
+  display: flex;
+  justify-content: space-between;
   color: #fff;
   font-size: 18px;
+  z-index: 10;
 }
 
-#gameover {
+#notice {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: #fff;
+  font-size: 32px;
+  display: none;
+  z-index: 20;
 }
 </style>
 </head>
@@ -66,16 +71,12 @@ body {
   <div id="player"></div>
 </div>
 
-<div id="score">0</div>
-
-<div id="gameover">
-  <h2>GAME OVER</h2>
-  <p>距離：<span id="finalScore"></span>m</p>
-
-  <button onclick="location.reload()">RETRY</button>
-  <button onclick="location.href='reward.html'">景品を見る</button>
-  <button onclick="location.href='game-start.html'">ホームに戻る</button>
+<div id="hud">
+  <div id="distance">0 m</div>
+  <div id="life">❤️❤️❤️</div>
 </div>
+
+<div id="notice"></div>
 
 <script src="game-mobile.js"></script>
 </body>
