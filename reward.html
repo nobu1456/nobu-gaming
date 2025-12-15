@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>景品一覧</title>
+
+<style>
+body {
+  margin: 0;
+  background: #111;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+header {
+  padding: 16px;
+  background: #000;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+header button {
+  background: #222;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.item {
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+  position: relative;
+}
+
+.item img {
+  width: 100%;
+  display: block;
+}
+
+/* 未解放 */
+.locked img {
+  filter: blur(20px) brightness(0.3);
+}
+
+.locked::after {
+  content: "LOCKED";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  letter-spacing: 2px;
+  background: rgba(0,0,0,.6);
+}
+
+.label {
+  padding: 6px;
+  font-size: 13px;
+  border-top: 1px solid #333;
+}
+
+.actions {
+  padding: 8px;
+}
+
+.actions button {
+  width: 100%;
+  padding: 8px 0;
+  background: #4af;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.actions button:disabled {
+  background: #333;
+  color: #777;
+  cursor: default;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <button onclick="location.href='game-start.html'">← ホーム</button>
+  <h1>🎁 景品一覧</h1>
+</header>
+
+<main class="grid">
+
+  <!-- 500 -->
+  <div class="item locked" data-reward="500" data-file="reward500.png">
+    <img src="reward500.png">
+    <div class="label">500m 達成</div>
+    <div class="actions">
+      <button disabled>未解放</button>
+    </div>
+  </div>
+
+  <!-- 1000 -->
+  <div class="item locked" data-reward="1000" data-file="reward1000.png">
+    <img src="reward1000.png">
+    <div class="label">1000m 達成</div>
+    <div class="actions">
+      <button disabled>未解放</button>
+    </div>
+  </div>
+
+  <!-- 1500 -->
+  <div class="item locked" data-reward="1500" data-file="reward1500.png">
+    <img src="reward1500.png">
+    <div class="label">1500m 達成</div>
+    <div class="actions">
+      <button disabled>未解放</button>
+    </div>
+  </div>
+
+  <!-- 2000 -->
+  <div class="item locked" data-reward="2000" data-file="reward2000.png">
+    <img src="reward2000.png">
+    <div class="label">2000m 達成</div>
+    <div class="actions">
+      <button disabled>未解放</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+document.querySelectorAll(".item").forEach(item => {
+  const distance = item.dataset.reward;
+  const file = item.dataset.file;
+  const button = item.querySelector("button");
+
+  if (localStorage.getItem(`reward_${distance}`)) {
+    item.classList.remove("locked");
+    button.disabled = false;
+    button.textContent = "ダウンロード";
+
+    button.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.href = file;
+      a.download = file;
+      a.click();
+    });
+  }
+});
+</script>
+
+</body>
+</html>

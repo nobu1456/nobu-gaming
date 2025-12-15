@@ -1,0 +1,27 @@
+.howto {
+  margin-top: 24px;
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(0,0,0,.6);
+  border: 1px solid #444;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.howto h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  border-bottom: 1px solid #555;
+  padding-bottom: 4px;
+}
+
+.pc {
+  color: #8fd;
+  margin-top: 8px;
+}
+
+.sp {
+  color: #fd8;
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Browser Dodge Game</title>
+  <link rel="stylesheet" href="game-browser.css" />
+</head>
+<body>
+
+  <!-- HUD -->
+  <div id="hud">
+    距離：<span id="score">0</span> m
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="game">
+    <div id="player"></div>
+  </div>
+
+  <!-- ゲームオーバー -->
+<div id="gameover">
+  <h2>GAME OVER</h2>
+  <p>距離：<span id="finalScore"></span>m</p>
+
+  <button onclick="location.reload()">RETRY</button>
+  <button onclick="location.href='reward.html'">景品を見る</button>
+  <button onclick="location.href='game-start.html'">ホームに戻る</button>
+</div>
+
+  <script src="game-browser.js"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUN GAME</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(#111, #000);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  text-align: center;
+}
+
+.title img {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 24px;
+  display: block;
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.buttons a {
+  flex: 1;
+  padding: 14px 0;
+  background: #4af;
+  color: #000;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 8px;
+  transition: transform .1s, opacity .1s;
+}
+
+.buttons a:hover {
+  transform: translateY(-2px);
+  opacity: .9;
+}
+
+.howto {
+  margin-top: 24px;
+  padding: 16px 18px;
+  background: rgba(0,0,0,.6);
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.howto h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  border-bottom: 1px solid #555;
+  padding-bottom: 4px;
+}
+
+.pc { color: #8fd; margin-top: 8px; }
+.sp { color: #fd8; }
+
+.link-reward {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.link-reward a {
+  color: #ccc;
+  text-decoration: none;
+}
+
+.link-reward a:hover {
+  text-decoration: underline;
+}
+
+/* スマホ対応 */
+@media (max-width: 480px) {
+  .buttons {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- タイトル -->
+  <div class="title">
+    <img src="title.png" alt="RUN GAME">
+  </div>
+
+  <!-- ゲーム選択 -->
+  <div class="buttons">
+    <a href="game-browser.html">ブラウザ版</a>
+    <a href="game-mobile.html">スマホ版</a>
+  </div>
+
+  <!-- 遊び方 -->
+  <div class="howto">
+    <h3>遊び方</h3>
+    <p>
+      ・左右に移動して障害物をよけよう<br>
+      ・進んだ距離がスコアになる<br>
+      ・500mごとに景品が解放される
+    </p>
+    <p class="pc">【ブラウザ版】← → キーで操作</p>
+    <p class="sp">【スマホ版】左右スワイプで操作</p>
+  </div>
+
+  <!-- 景品画面リンク -->
+  <div class="link-reward">
+    ▶ <a href="reward.html">景品一覧を見る</a>
+  </div>
+
+</div>
+
+</body>
+</html>

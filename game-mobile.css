@@ -1,0 +1,61 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* HUD */
+#hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  font-size: 16px;
+}
+
+/* ゲーム画面 */
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(#222, #000);
+}
+
+/* プレイヤー */
+#player {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  background: #4af;
+  border-radius: 10px;
+  transform: translateX(-50%);
+}
+
+/* ゲームオーバー */
+#gameover {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.hidden {
+  display: none;
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+}
