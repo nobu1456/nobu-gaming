@@ -55,9 +55,10 @@ body {
 /* 障害物 */
 .obstacle {
   position: absolute;
-  top: -40px;
-  width: 40px;
-  height: 40px;
-  background: #f44;
-  border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  top: -60px;
 }

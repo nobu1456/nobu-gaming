@@ -1,32 +1,213 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>Browser Dodge Game</title>
-  <link rel="stylesheet" href="game-browser.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Browser</title>
+
+<style>
+/* ===== ページ中央に収める ===== */
+body {
+  margin: 0;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+}
+
+/* ===== ゲーム画面 ===== */
+#game {
+  position: relative;
+  width: 420px;          /* ← 狭くした */
+  height: 720px;
+  background: #000;
+  overflow: hidden;
+}
+
+/* ===== プレイヤー ===== */
+#player {
+  position: absolute;
+  bottom: 48px;
+  width: 132px;
+  height: 132px;
+  background: url("player.png") no-repeat center / contain;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ===== 敵 ===== */
+.obstacle {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  top: -60px;
+}
+
+/* ===== スコア ===== */
+#score {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 16px;
+  z-index: 10;
+}
+
+/* ===== GAME OVER ===== */
+#gameover {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#gameover button {
+  margin: 6px;
+  padding: 10px 16px;
+  font-size: 15px;
+}
+</style>
 </head>
+
 <body>
 
-  <!-- HUD -->
-  <div id="hud">
-    距離：<span id="score">0</span> m
+<div id="game">
+  <div id="player"></div>
+  <div id="score">0m</div>
+
+  <div id="gameover">
+    <h2>GAME OVER</h2>
+    <p>距離：<span id="finalScore"></span>m</p>
+
+    <button onclick="location.reload()">RETRY</button>
+    <button onclick="location.href='reward.html'">景品を見る</button>
+    <button onclick="location.href='game-start.html'">ホームに戻る</button>
   </div>
-
-  <!-- ゲーム画面 -->
-  <div id="game">
-    <div id="player"></div>
-  </div>
-
-  <!-- ゲームオーバー -->
-<div id="gameover">
-  <h2>GAME OVER</h2>
-  <p>距離：<span id="finalScore"></span>m</p>
-
-  <button onclick="location.reload()">RETRY</button>
-  <button onclick="location.href='reward.html'">景品を見る</button>
-  <button onclick="location.href='game-start.html'">ホームに戻る</button>
 </div>
 
-  <script src="game-browser.js"></script>
+<script>
+/* ===== 変数 ===== */
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreEl = document.getElementById("score");
+const gameoverEl = document.getElementById("gameover");
+const finalScoreEl = document.getElementById("finalScore");
+
+let playerX = game.clientWidth / 2;
+let speed = 4;
+let distance = 0;
+let lives = 3;
+let obstacles = [];
+let running = true;
+let lastObstacleTime = 0;
+
+const unlocked = new Set();
+
+/* ===== キーボード操作 ===== */
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+/* ===== 敵生成 ===== */
+function createObstacle() {
+  const obs = document.createElement("div");
+  obs.className = "obstacle";
+
+  const enemy = Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
+  obs.style.backgroundImage = `url("${enemy}")`;
+
+  obs.style.left = Math.random() * (game.clientWidth - 56) + "px";
+  obs.style.top = "-60px";
+
+  game.appendChild(obs);
+  obstacles.push({ el: obs, y: -60 });
+}
+
+/* ===== 報酬チェック ===== */
+function checkReward() {
+  const best = Math.floor(distance);
+  const saved = Number(localStorage.getItem("bestDistance") || 0);
+
+  if (best > saved) {
+    localStorage.setItem("bestDistance", best);
+  }
+
+  const milestone = Math.floor(best / 500) * 500;
+  if (milestone >= 500 && !unlocked.has(milestone)) {
+    unlocked.add(milestone);
+    console.log("Reward unlocked:", milestone);
+  }
+}
+
+/* ===== ゲームループ ===== */
+function loop(timestamp) {
+  if (!running) return;
+
+  if (keys["ArrowLeft"] || keys["a"]) playerX -= 6;
+  if (keys["ArrowRight"] || keys["d"]) playerX += 6;
+
+  playerX = Math.max(0, Math.min(game.clientWidth - player.offsetWidth, playerX));
+  player.style.left = playerX + "px";
+
+  distance += 0.1;
+  scoreEl.textContent = Math.floor(distance) + "m";
+
+  if (Math.floor(distance) % 100 === 0) {
+    speed = 4 + Math.floor(distance / 100);
+  }
+
+  const interval = 350 + Math.random() * 250;
+  if (timestamp - lastObstacleTime > interval) {
+    createObstacle();
+    lastObstacleTime = timestamp;
+  }
+
+  const p = player.getBoundingClientRect();
+
+  obstacles.forEach((o, i) => {
+    o.y += speed;
+    o.el.style.top = o.y + "px";
+
+    const r = o.el.getBoundingClientRect();
+    const hit = 8;
+
+    if (
+      p.left + hit < r.right - hit &&
+      p.right - hit > r.left + hit &&
+      p.top + hit < r.bottom - hit &&
+      p.bottom - hit > r.top + hit
+    ) {
+      lives--;
+      o.el.remove();
+      obstacles.splice(i, 1);
+
+      if (lives <= 0) {
+        running = false;
+        finalScoreEl.textContent = Math.floor(distance);
+        checkReward();
+        gameoverEl.style.display = "flex";
+      }
+    }
+
+    if (o.y > game.clientHeight + 80) {
+      o.el.remove();
+      obstacles.splice(i, 1);
+    }
+  });
+
+  checkReward();
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>
+
 </body>
 </html>
