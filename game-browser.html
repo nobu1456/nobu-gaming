@@ -14,14 +14,13 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: #fff;
 }
 
 /* ===== ゲーム画面 ===== */
 #game {
   position: relative;
-  width: 1500px;          /* ← 狭くした */
-  height: 1000px;
+  width: min(100vw, 1200px);
+  height: min(100vh, 800px);
   background: #000;
   overflow: hidden;
 }
@@ -120,7 +119,7 @@ function createObstacle() {
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const enemy = Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
+  const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
   obs.style.backgroundImage = `url("${enemy}")`;
 
   obs.style.left = Math.random() * (game.clientWidth - 56) + "px";
