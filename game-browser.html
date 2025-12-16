@@ -6,7 +6,7 @@
 <title>Game Browser</title>
 
 <style>
-/* ===== ページ全体 ===== */
+/* ===== 全体 ===== */
 body {
   margin: 0;
   background: #111;
@@ -14,17 +14,38 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  overflow: hidden;
   color: #fff;
+  overflow: hidden;
 }
 
-/* ===== ゲーム画面（レスポンシブ） ===== */
+/* ===== ゲーム領域 ===== */
 #game {
   position: relative;
   width: min(100vw, 1200px);
   height: min(100vh, 800px);
   background: #000;
   overflow: hidden;
+}
+
+/* ===== UI ===== */
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+#hearts {
+  font-size: 24px;
+}
+
+#distance {
+  font-size: 18px;
 }
 
 /* ===== プレイヤー ===== */
@@ -34,7 +55,6 @@ body {
   width: 132px;
   height: 132px;
   background: url("player.png") no-repeat center / contain;
-  pointer-events: none;
 }
 
 /* ===== 敵 ===== */
@@ -46,15 +66,6 @@ body {
   background-position: center;
   background-size: contain;
   top: -60px;
-}
-
-/* ===== スコア ===== */
-#score {
-  position: fixed;
-  top: 12px;
-  right: 16px;
-  font-size: 18px;
-  z-index: 100;
 }
 
 /* ===== GAME OVER ===== */
@@ -80,14 +91,17 @@ body {
 <body>
 
 <div id="game">
+  <div id="ui">
+    <div id="hearts">❤️❤️❤️</div>
+    <div id="distance">0m</div>
+  </div>
+
   <div id="player"></div>
 </div>
 
-<div id="score">0m</div>
-
 <div id="gameover">
   <h2>GAME OVER</h2>
-  <p>距離：<span id="finalScore"></span>m</p>
+  <p>距離：<span id="finalDistance"></span>m</p>
   <button onclick="location.reload()">RETRY</button>
   <button onclick="location.href='reward.html'">景品を見る</button>
   <button onclick="location.href='game-start.html'">ホームに戻る</button>
@@ -97,9 +111,10 @@ body {
 /* ===== DOM ===== */
 const game = document.getElementById("game");
 const player = document.getElementById("player");
-const scoreEl = document.getElementById("score");
+const heartsEl = document.getElementById("hearts");
+const distanceEl = document.getElementById("distance");
 const gameoverEl = document.getElementById("gameover");
-const finalScoreEl = document.getElementById("finalScore");
+const finalDistanceEl = document.getElementById("finalDistance");
 
 /* ===== 状態 ===== */
 let playerX = 0;
@@ -110,26 +125,23 @@ let obstacles = [];
 let running = true;
 let lastObstacleTime = 0;
 
-/* ===== 起動時初期化（超重要） ===== */
+/* ===== 初期化 ===== */
 window.addEventListener("load", () => {
   playerX = game.clientWidth / 2 - player.offsetWidth / 2;
   player.style.left = playerX + "px";
 });
 
-/* ===== キー入力 ===== */
+/* ===== キー操作 ===== */
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
 /* ===== 敵生成 ===== */
 function createObstacle() {
-  if (!running) return;
-
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const enemy =
-    Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
+  const enemy = Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
   obs.style.backgroundImage = `url("${enemy}")`;
 
   const margin = 40;
@@ -137,18 +149,14 @@ function createObstacle() {
     margin + Math.random() * (game.clientWidth - 56 - margin * 2) + "px";
 
   obs.style.top = "-60px";
-
   game.appendChild(obs);
   obstacles.push({ el: obs, y: -60 });
 }
 
-/* ===== 報酬チェック（共通） ===== */
-function checkReward() {
-  const best = Math.floor(distance);
-  const saved = Number(localStorage.getItem("bestDistance") || 0);
-  if (best > saved) {
-    localStorage.setItem("bestDistance", best);
-  }
+/* ===== UI更新 ===== */
+function updateUI() {
+  heartsEl.textContent = "❤️".repeat(lives);
+  distanceEl.textContent = Math.floor(distance) + "m";
 }
 
 /* ===== ゲームループ ===== */
@@ -167,9 +175,8 @@ function loop(timestamp) {
 
   /* 距離 */
   distance += 0.1;
-  scoreEl.textContent = Math.floor(distance) + "m";
 
-  /* 難易度 */
+  /* スピードUP */
   if (Math.floor(distance) % 100 === 0) {
     speed = 4 + Math.floor(distance / 100);
   }
@@ -181,7 +188,6 @@ function loop(timestamp) {
     lastObstacleTime = timestamp;
   }
 
-  /* 当たり判定 */
   const p = player.getBoundingClientRect();
 
   obstacles.forEach((o, i) => {
@@ -203,8 +209,7 @@ function loop(timestamp) {
 
       if (lives <= 0) {
         running = false;
-        finalScoreEl.textContent = Math.floor(distance);
-        checkReward();
+        finalDistanceEl.textContent = Math.floor(distance);
         gameoverEl.style.display = "flex";
       }
     }
@@ -215,7 +220,7 @@ function loop(timestamp) {
     }
   });
 
-  checkReward();
+  updateUI();
   requestAnimationFrame(loop);
 }
 
