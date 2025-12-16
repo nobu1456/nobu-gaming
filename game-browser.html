@@ -14,8 +14,8 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: #fff;
   overflow: hidden;
+  color: #fff;
 }
 
 /* ===== ゲーム領域 ===== */
@@ -31,22 +31,16 @@ body {
 #ui {
   position: absolute;
   top: 10px;
-  left: 10px;
-  right: 10px;
+  left: 12px;
+  right: 12px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   z-index: 50;
   pointer-events: none;
 }
 
-#hearts {
-  font-size: 24px;
-}
-
-#distance {
-  font-size: 18px;
-}
+#hearts { font-size: 24px; }
+#distance { font-size: 18px; }
 
 /* ===== プレイヤー ===== */
 #player {
@@ -54,18 +48,23 @@ body {
   bottom: 40px;
   width: 132px;
   height: 132px;
-  background: url("player.png") no-repeat center / contain;
+  background: url("player.png") center / contain no-repeat;
+  z-index: 10;
 }
 
-/* ===== 敵 ===== */
+/* ===== 敵（表示保証） ===== */
 .obstacle {
   position: absolute;
-  width: 56px;
-  height: 56px;
-  background-repeat: no-repeat;
+  width: 64px;
+  height: 64px;
+  top: -70px;
+  z-index: 8;
+
+  /* ★重要：画像が失敗しても見える保険 */
+  background-color: #c00;
   background-position: center;
+  background-repeat: no-repeat;
   background-size: contain;
-  top: -60px;
 }
 
 /* ===== GAME OVER ===== */
@@ -95,7 +94,6 @@ body {
     <div id="hearts">❤️❤️❤️</div>
     <div id="distance">0m</div>
   </div>
-
   <div id="player"></div>
 </div>
 
@@ -131,7 +129,7 @@ window.addEventListener("load", () => {
   player.style.left = playerX + "px";
 });
 
-/* ===== キー操作 ===== */
+/* ===== キー入力 ===== */
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
@@ -141,29 +139,31 @@ function createObstacle() {
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const enemy = Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
-  obs.style.backgroundImage = `url("${enemy}")`;
+  const enemy =
+    Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
+
+  /* ★キャッシュ対策付き */
+  obs.style.backgroundImage =
+    `url("${enemy}?v=${Date.now()}")`;
 
   const margin = 40;
   obs.style.left =
-    margin + Math.random() * (game.clientWidth - 56 - margin * 2) + "px";
+    margin + Math.random() * (game.clientWidth - 64 - margin * 2) + "px";
 
-  obs.style.top = "-60px";
   game.appendChild(obs);
-  obstacles.push({ el: obs, y: -60 });
+  obstacles.push({ el: obs, y: -70 });
 }
 
-/* ===== UI更新 ===== */
+/* ===== UI ===== */
 function updateUI() {
   heartsEl.textContent = "❤️".repeat(lives);
   distanceEl.textContent = Math.floor(distance) + "m";
 }
 
-/* ===== ゲームループ ===== */
-function loop(timestamp) {
+/* ===== メインループ ===== */
+function loop(ts) {
   if (!running) return;
 
-  /* プレイヤー移動 */
   if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
   if (keys["ArrowRight"] || keys["d"]) playerX += 7;
 
@@ -173,19 +173,16 @@ function loop(timestamp) {
   );
   player.style.left = playerX + "px";
 
-  /* 距離 */
   distance += 0.1;
 
-  /* スピードUP */
   if (Math.floor(distance) % 100 === 0) {
     speed = 4 + Math.floor(distance / 100);
   }
 
-  /* 敵生成 */
-  const interval = 350 + Math.random() * 250;
-  if (timestamp - lastObstacleTime > interval) {
+  const interval = 300 + Math.random() * 200;
+  if (ts - lastObstacleTime > interval) {
     createObstacle();
-    lastObstacleTime = timestamp;
+    lastObstacleTime = ts;
   }
 
   const p = player.getBoundingClientRect();
