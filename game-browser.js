@@ -1,175 +1,106 @@
 const game = document.getElementById("game");
 const player = document.getElementById("player");
-const scoreEl = document.getElementById("score");
+const heartsEl = document.getElementById("hearts");
+const distanceEl = document.getElementById("distance");
 const gameoverEl = document.getElementById("gameover");
-const finalScoreEl = document.getElementById("finalScore");
+const finalDistanceEl = document.getElementById("finalDistance");
 
-let playerX = window.innerWidth / 2;
-const speed = 6;
-const keys = { left: false, right: false };
-
+let playerX = 0;
+let speed = 4;
+let distance = 0;
+let lives = 3;
 let obstacles = [];
-let frame = 0;
-let score = 0;
-let level = 1;
-let life = 3;
-let invincible = false;
-let isGameOver = false;
+let running = true;
+let lastObstacleTime = 0;
 
-// ===== HUD =====
-const lifeEl = document.createElement("div");
-lifeEl.style.position = "fixed";
-lifeEl.style.top = "36px";
-lifeEl.style.left = "12px";
-lifeEl.textContent = "❤️❤️❤️";
-document.body.appendChild(lifeEl);
+const keys = {};
 
-// ===== 景品通知 =====
-const rewardNotice = document.createElement("div");
-rewardNotice.style.position = "fixed";
-rewardNotice.style.top = "50%";
-rewardNotice.style.left = "50%";
-rewardNotice.style.transform = "translate(-50%, -50%)";
-rewardNotice.style.padding = "20px 28px";
-rewardNotice.style.background = "rgba(0,0,0,.85)";
-rewardNotice.style.border = "2px solid gold";
-rewardNotice.style.color = "gold";
-rewardNotice.style.fontSize = "18px";
-rewardNotice.style.display = "none";
-rewardNotice.textContent = "🎁 新しい景品が解放されました！";
-document.body.appendChild(rewardNotice);
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
 
-// ===== 入力 =====
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") keys.left = true;
-  if (e.key === "ArrowRight") keys.right = true;
-});
-document.addEventListener("keyup", e => {
-  if (e.key === "ArrowLeft") keys.left = false;
-  if (e.key === "ArrowRight") keys.right = false;
+window.addEventListener("load", () => {
+  playerX = game.clientWidth / 2 - player.offsetWidth / 2;
+  player.style.left = playerX + "px";
 });
 
-// ===== 難易度 =====
-function getDifficulty() {
-  return {
-    obstacleSpeed: 3 + level * 0.8,
-    spawnInterval: Math.max(14, 70 - level * 6),
-    maxObstacles: 2 + Math.floor(level * 0.8),
-  };
-}
-
-// ===== 障害物 =====
 function createObstacle() {
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const lanes = 6;
-  const laneW = window.innerWidth / lanes;
-  const lane = Math.floor(Math.random() * lanes);
+  const img =
+    Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
 
-  obs.style.left = lane * laneW + laneW / 2 - 20 + "px";
+  obs.style.backgroundImage = `url("${img}")`;
+
+  const margin = 40;
+  obs.style.left =
+    margin + Math.random() * (game.clientWidth - 64 - margin * 2) + "px";
+
   game.appendChild(obs);
-
-  obstacles.push({ el: obs, y: -40 });
+  obstacles.push({ el: obs, y: -80 });
 }
 
-// ===== 判定 =====
-function isColliding(a, b) {
-  const ar = a.getBoundingClientRect();
-  const br = b.getBoundingClientRect();
-  return !(
-    ar.right < br.left ||
-    ar.left > br.right ||
-    ar.bottom < br.top ||
-    ar.top > br.bottom
+function updateUI() {
+  heartsEl.textContent = "❤️".repeat(lives);
+  distanceEl.textContent = Math.floor(distance) + "m";
+}
+
+function loop(ts) {
+  if (!running) return;
+
+  if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
+  if (keys["ArrowRight"] || keys["d"]) playerX += 7;
+
+  playerX = Math.max(
+    0,
+    Math.min(game.clientWidth - player.offsetWidth, playerX)
   );
-}
-
-// ===== ダメージ =====
-function takeDamage() {
-  if (invincible) return;
-
-  life--;
-  lifeEl.textContent = "❤️".repeat(life);
-  invincible = true;
-  player.style.opacity = "0.5";
-
-  setTimeout(() => {
-    invincible = false;
-    player.style.opacity = "1";
-  }, 900);
-
-  if (life <= 0) gameOver();
-}
-
-// ===== 終了 =====
-function gameOver() {
-  isGameOver = true;
-  finalScoreEl.textContent = Math.floor(score);
-  gameoverEl.style.display = "flex";
-}
-
-// ===== 景品解放 =====
-function unlockReward(distance) {
-  const key = `reward_${distance}`;
-  if (localStorage.getItem(key)) return;
-
-  localStorage.setItem(key, "true");
-
-  rewardNotice.style.display = "block";
-  setTimeout(() => {
-    rewardNotice.style.display = "none";
-  }, 1800);
-}
-
-// ===== メイン =====
-function gameLoop() {
-  if (isGameOver) return;
-
-  if (keys.left) playerX -= speed;
-  if (keys.right) playerX += speed;
-
-  const half = player.offsetWidth / 2;
-  playerX = Math.max(half, Math.min(window.innerWidth - half, playerX));
   player.style.left = playerX + "px";
 
-  score += 0.12;
-  const displayScore = Math.floor(score);
-  scoreEl.textContent = displayScore;
+  distance += 0.15;
 
-  level = Math.floor(displayScore / 100) + 1;
-  const diff = getDifficulty();
+  const level = Math.floor(distance / 100);
+  speed = 4 + level;
 
-  if (frame % diff.spawnInterval === 0 && obstacles.length < diff.maxObstacles) {
+  if (ts - lastObstacleTime > 300) {
     createObstacle();
+    lastObstacleTime = ts;
   }
 
-  obstacles.forEach(obs => {
-    obs.y += diff.obstacleSpeed;
-    obs.el.style.top = obs.y + "px";
+  const p = player.getBoundingClientRect();
 
-    if (isColliding(player, obs.el)) {
-      takeDamage();
-      obs.el.remove();
-      obs.y = window.innerHeight + 100;
+  obstacles.forEach((o, i) => {
+    o.y += speed;
+    o.el.style.top = o.y + "px";
+
+    const r = o.el.getBoundingClientRect();
+    const hit = 10;
+
+    if (
+      p.left + hit < r.right - hit &&
+      p.right - hit > r.left + hit &&
+      p.top + hit < r.bottom - hit &&
+      p.bottom - hit > r.top + hit
+    ) {
+      lives--;
+      o.el.remove();
+      obstacles.splice(i, 1);
+
+      if (lives <= 0) {
+        running = false;
+        finalDistanceEl.textContent = Math.floor(distance);
+        gameoverEl.style.display = "flex";
+      }
+    }
+
+    if (o.y > game.clientHeight + 100) {
+      o.el.remove();
+      obstacles.splice(i, 1);
     }
   });
 
-  obstacles = obstacles.filter(obs => {
-    if (obs.y > window.innerHeight) {
-      obs.el.remove();
-      return false;
-    }
-    return true;
-  });
-
-  // ===== 500m刻み解放 =====
-  if (displayScore % 500 === 0 && displayScore > 0) {
-    unlockReward(displayScore);
-  }
-
-  frame++;
-  requestAnimationFrame(gameLoop);
+  updateUI();
+  requestAnimationFrame(loop);
 }
 
-gameLoop();
+requestAnimationFrame(loop);
