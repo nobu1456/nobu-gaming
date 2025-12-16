@@ -3,171 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>景品一覧</title>
+<title>Game Browser</title>
 
 <style>
 body {
   margin: 0;
   background: #111;
-  color: #fff;
-  font-family: system-ui, sans-serif;
-}
-
-header {
-  padding: 16px;
-  background: #000;
-  border-bottom: 1px solid #333;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-header button {
-  background: #222;
-  color: #fff;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-  padding: 16px;
-}
-
-.item {
-  background: #000;
-  border: 1px solid #333;
-  border-radius: 8px;
-  overflow: hidden;
-  text-align: center;
-  position: relative;
-}
-
-.item img {
-  width: 100%;
-  display: block;
-}
-
-/* 未解放 */
-.locked img {
-  filter: blur(20px) brightness(0.3);
-}
-
-.locked::after {
-  content: "LOCKED";
-  position: absolute;
-  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 20px;
-  letter-spacing: 2px;
-  background: rgba(0,0,0,.6);
+  height: 100vh;
+  color: #fff;
+  overflow: hidden;
 }
-
-.label {
-  padding: 6px;
-  font-size: 13px;
-  border-top: 1px solid #333;
+#game {
+  position: relative;
+  width: min(100vw, 1200px);
+  height: min(100vh, 800px);
+  background: #000;
+  overflow: hidden;
 }
-
-.actions {
-  padding: 8px;
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 50;
+  pointer-events: none;
 }
-
-.actions button {
-  width: 100%;
-  padding: 8px 0;
-  background: #4af;
-  border: none;
-  border-radius: 6px;
+#hearts { font-size: 24px; }
+#distance { font-size: 18px; }
+#player {
+  position: absolute;
+  bottom: 40px;
+  width: 132px;
+  height: 132px;
+  background: url("player.png") center / contain no-repeat;
+}
+.obstacle {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  top: -60px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+#gameover {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 200;
+}
+#gameover button {
+  margin: 6px;
+  padding: 10px 18px;
+  font-size: 16px;
+}
+#rewardNotice {
+  color: gold;
   font-weight: bold;
-  cursor: pointer;
-}
-
-.actions button:disabled {
-  background: #333;
-  color: #777;
-  cursor: default;
+  display: none;
+  margin: 6px 0;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <button onclick="location.href='game-start.html'">← ホーム</button>
-  <h1>🎁 景品一覧</h1>
-</header>
-
-<main class="grid">
-
-  <!-- 500 -->
-  <div class="item locked" data-reward="500" data-file="reward500.png">
-    <img src="reward500.png">
-    <div class="label">500m 達成</div>
-    <div class="actions">
-      <button disabled>未解放</button>
-    </div>
+<div id="game">
+  <div id="ui">
+    <div id="hearts">❤️❤️❤️</div>
+    <div id="distance">0m</div>
   </div>
+  <div id="player"></div>
+</div>
 
-  <!-- 1000 -->
-  <div class="item locked" data-reward="1000" data-file="reward1000.png">
-    <img src="reward1000.png">
-    <div class="label">1000m 達成</div>
-    <div class="actions">
-      <button disabled>未解放</button>
-    </div>
-  </div>
+<div id="gameover">
+  <h2>GAME OVER</h2>
+  <p>距離：<span id="finalDistance"></span>m</p>
+  <p id="rewardNotice">🎁 景品解放！</p>
+  <button onclick="location.reload()">RETRY</button>
+  <button onclick="location.href='reward.html'">景品を見る</button>
+  <button onclick="location.href='game-start.html'">ホームに戻る</button>
+</div>
 
-  <!-- 1500 -->
-  <div class="item locked" data-reward="1500" data-file="reward1500.png">
-    <img src="reward1500.png">
-    <div class="label">1500m 達成</div>
-    <div class="actions">
-      <button disabled>未解放</button>
-    </div>
-  </div>
-
-  <!-- 2000 -->
-  <div class="item locked" data-reward="2000" data-file="reward2000.png">
-    <img src="reward2000.png">
-    <div class="label">2000m 達成</div>
-    <div class="actions">
-      <button disabled>未解放</button>
-    </div>
-  </div>
-
-</main>
+<audio id="bgm" src="bgm.mp3" loop></audio>
 
 <script>
-document.querySelectorAll(".item").forEach(item => {
-  const distance = item.dataset.reward;
-  const file = item.dataset.file;
-  const button = item.querySelector("button");
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const heartsEl = document.getElementById("hearts");
+const distanceEl = document.getElementById("distance");
+const gameoverEl = document.getElementById("gameover");
+const finalDistanceEl = document.getElementById("finalDistance");
+const rewardNotice = document.getElementById("rewardNotice");
+const bgm = document.getElementById("bgm");
 
-  if (localStorage.getItem(`reward_${distance}`)) {
-    item.classList.remove("locked");
-    button.disabled = false;
-    button.textContent = "ダウンロード";
+let playerX = 0;
+let speed = 4;
+let distance = 0;
+let lives = 3;
+let obstacles = [];
+let running = true;
+let lastObstacleTime = 0;
+let invincible = false;
+let invincibleStart = 0;
 
-    button.addEventListener("click", () => {
-      const a = document.createElement("a");
-      a.href = file;
-      a.download = file;
-      a.click();
-    });
-  }
+const rewards = [
+  { dist: 500, key: "reward_500", shown: false },
+  { dist: 1000, key: "reward_1000", shown: false },
+  { dist: 1500, key: "reward_1500", shown: false },
+  { dist: 2000, key: "reward_2000", shown: false }
+];
+
+window.addEventListener("load", () => {
+  playerX = game.clientWidth / 2 - player.offsetWidth / 2;
+  player.style.left = playerX + "px";
 });
+
+const keys = {};
+window.addEventListener("keydown", e => {
+  keys[e.key] = true;
+  if (bgm.paused) bgm.play();
+});
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+function createObstacle() {
+  const obs = document.createElement("div");
+  obs.className = "obstacle";
+  const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
+  obs.style.backgroundImage = `url("${enemy}")`;
+  const margin = 40;
+  obs.style.left = margin + Math.random() * (game.clientWidth - 56 - margin*2) + "px";
+  game.appendChild(obs);
+  obstacles.push({ el: obs, y: -60 });
+}
+
+function updateUI() {
+  heartsEl.textContent = "❤️".repeat(lives);
+  distanceEl.textContent = Math.floor(distance) + "m";
+}
+
+function loop(ts) {
+  if (!running) return;
+  if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
+  if (keys["ArrowRight"] || keys["d"]) playerX += 7;
+  playerX = Math.max(0, Math.min(game.clientWidth - player.offsetWidth, playerX));
+  player.style.left = playerX + "px";
+
+  distance += 0.1;
+  if (Math.floor(distance) % 100 === 0) speed = 4 + Math.floor(distance / 100);
+
+  if (ts - lastObstacleTime > 350 + Math.random()*250) {
+    createObstacle();
+    lastObstacleTime = ts;
+  }
+
+  const p = player.getBoundingClientRect();
+
+  obstacles.forEach((o,i) => {
+    o.y += speed;
+    o.el.style.top = o.y + "px";
+    const r = o.el.getBoundingClientRect();
+    const hit = 10;
+
+    if (!invincible &&
+        p.left + hit < r.right - hit &&
+        p.right - hit > r.left + hit &&
+        p.top + hit < r.bottom - hit &&
+        p.bottom - hit > r.top + hit
+    ) {
+      lives--;
+      invincible = true;
+      invincibleStart = ts;
+      player.style.opacity = "0.5";
+      o.el.remove();
+      obstacles.splice(i,1);
+
+      if (lives <= 0) {
+        running = false;
+        bgm.pause();
+        finalDistanceEl.textContent = Math.floor(distance);
+        rewards.forEach(r => {
+          if (distance >= r.dist && !r.shown) {
+            localStorage.setItem(r.key,"true");
+            rewardNotice.textContent = `🎁 ${r.dist}mで景品解放！`;
+            rewardNotice.style.display = "block";
+            r.shown = true;
+          }
+        });
+        gameoverEl.style.display = "flex";
+      }
+    }
+
+    if (o.y > game.clientHeight + 80) {
+      o.el.remove();
+      obstacles.splice(i,1);
+    }
+  });
+
+  if (invincible && ts - invincibleStart > 1000) {
+    invincible = false;
+    player.style.opacity = "1";
+  }
+
+  updateUI();
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
 </script>
 
 </body>
