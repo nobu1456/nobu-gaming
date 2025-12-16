@@ -6,12 +6,10 @@
 <title>Game Mobile</title>
 
 <style>
-/* ===== 基本 ===== */
 body {
   margin: 0;
-  overflow: hidden;
   background: #000;
-  touch-action: none;
+  overflow: hidden;
 }
 
 #game {
@@ -22,40 +20,65 @@ body {
   touch-action: none;
 }
 
-/* ===== プレイヤー ===== */
-#player {
+/* UI */
+#ui {
   position: absolute;
-  bottom: 48px;
-  width: 132px;   /* 1.5倍 */
-  height: 132px;
-  background: url("player.png") no-repeat center / contain;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 20;
   pointer-events: none;
 }
 
-/* ===== 敵 ===== */
+#hearts { font-size: 26px; }
+#score { font-size: 18px; }
+
+/* Player */
+#player {
+  position: absolute;
+  bottom: 48px;
+  width: 132px;
+  height: 132px;
+  background: url("player.png") center / contain no-repeat;
+  z-index: 10;
+}
+
+/* Enemy */
 .obstacle {
   position: absolute;
   width: 56px;
   height: 56px;
+  top: -60px;
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;
-  top: -60px;
 }
 
-/* ===== スコア ===== */
-#score {
-  position: fixed;
-  top: 10px;
-  right: 12px;
+/* Controls */
+#controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 30;
+}
+
+#controls button {
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.15);
   color: #fff;
-  font-size: 18px;
-  z-index: 10;
 }
 
-/* ===== GAME OVER ===== */
+/* Game Over */
 #gameover {
   position: fixed;
   inset: 0;
@@ -65,13 +88,7 @@ body {
   align-items: center;
   flex-direction: column;
   color: #fff;
-  z-index: 20;
-}
-
-#gameover button {
-  margin: 6px;
-  padding: 10px 16px;
-  font-size: 16px;
+  z-index: 50;
 }
 </style>
 </head>
@@ -79,140 +96,152 @@ body {
 <body>
 
 <div id="game">
-  <div id="player"></div>
-</div>
+  <div id="ui">
+    <div id="hearts">❤️❤️❤️</div>
+    <div id="score">0m</div>
+  </div>
 
-<div id="score">0m</div>
+  <div id="player"></div>
+
+  <div id="controls">
+    <button id="left">◀</button>
+    <button id="right">▶</button>
+  </div>
+</div>
 
 <div id="gameover">
   <h2>GAME OVER</h2>
   <p>距離：<span id="finalScore"></span>m</p>
-
   <button onclick="location.reload()">RETRY</button>
   <button onclick="location.href='reward.html'">景品を見る</button>
-  <button onclick="location.href='game-start.html'">ホームに戻る</button>
+  <button onclick="location.href='game-start.html'">ホーム</button>
 </div>
 
+<audio id="bgm" src="bgm.mp3" loop></audio>
+
 <script>
-/* ===== 変数 ===== */
 const game = document.getElementById("game");
 const player = document.getElementById("player");
+const heartsEl = document.getElementById("hearts");
 const scoreEl = document.getElementById("score");
 const gameoverEl = document.getElementById("gameover");
 const finalScoreEl = document.getElementById("finalScore");
+const bgm = document.getElementById("bgm");
 
-let playerX = window.innerWidth / 2;
+let playerX = 0;
 let speed = 4;
 let distance = 0;
 let lives = 3;
-let obstacles = [];
 let running = true;
-let lastObstacleTime = 0;
+let obstacles = [];
+let lastObstacle = 0;
 
-const unlocked = new Set();
+let moveLeft = false;
+let moveRight = false;
 
-/* ===== タッチ操作 ===== */
-let touchStartX = null;
+/* 無敵 */
+let invincible = false;
+let blinkInterval = null;
 
-game.addEventListener("touchstart", e => {
-  touchStartX = e.touches[0].clientX;
-});
+/* 初期位置 */
+playerX = game.clientWidth / 2 - player.offsetWidth / 2;
+player.style.left = playerX + "px";
 
-game.addEventListener("touchmove", e => {
-  if (touchStartX === null) return;
-  const dx = e.touches[0].clientX - touchStartX;
-  playerX += dx;
-  touchStartX = e.touches[0].clientX;
+/* BGM（初回タップ） */
+document.body.addEventListener("touchstart", () => {
+  bgm.play().catch(()=>{});
+}, { once:true });
 
-  const minX = 0;
-  const maxX = game.clientWidth - player.offsetWidth;
-  playerX = Math.max(minX, Math.min(maxX, playerX));
+/* Controls */
+left.addEventListener("touchstart", () => moveLeft = true);
+left.addEventListener("touchend", () => moveLeft = false);
+right.addEventListener("touchstart", () => moveRight = true);
+right.addEventListener("touchend", () => moveRight = false);
 
-  player.style.left = playerX + "px";
-});
-
-/* ===== 敵生成 ===== */
+/* Enemy */
 function createObstacle() {
-  const obs = document.createElement("div");
-  obs.className = "obstacle";
-
-  const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
-  obs.style.backgroundImage = `url("${enemy}")`;
-
-  obs.style.left = Math.random() * (game.clientWidth - 56) + "px";
-  obs.style.top = "-60px";
-
-  game.appendChild(obs);
-  obstacles.push({ el: obs, y: -60 });
+  const o = document.createElement("div");
+  o.className = "obstacle";
+  o.style.backgroundImage =
+    `url("${Math.random()<.5?"enemy1ver2.png":"enemy2ver2.png"}")`;
+  o.style.left = Math.random() * (game.clientWidth - 56) + "px";
+  game.appendChild(o);
+  obstacles.push({ el:o, y:-60 });
 }
 
-/* ===== 報酬チェック ===== */
-function checkReward() {
-  const best = Math.floor(distance);
-  const saved = Number(localStorage.getItem("bestDistance") || 0);
+/* 無敵処理 */
+function startInvincible() {
+  invincible = true;
+  let visible = true;
+  blinkInterval = setInterval(() => {
+    visible = !visible;
+    player.style.opacity = visible ? "1" : "0.3";
+  }, 120);
 
-  if (best > saved) {
-    localStorage.setItem("bestDistance", best);
-  }
-
-  const milestone = Math.floor(best / 500) * 500;
-  if (milestone >= 500 && !unlocked.has(milestone)) {
-    unlocked.add(milestone);
-    console.log("Reward unlocked:", milestone);
-  }
+  setTimeout(() => {
+    invincible = false;
+    clearInterval(blinkInterval);
+    player.style.opacity = "1";
+  }, 1200);
 }
 
-/* ===== ゲームループ ===== */
-function loop(timestamp) {
+/* 報酬 */
+function unlockRewards(d) {
+  [500,1000,1500,2000].forEach(r=>{
+    if (d>=r) localStorage.setItem(`reward_${r}`,"1");
+  });
+}
+
+/* Loop */
+function loop(t) {
   if (!running) return;
+
+  if (moveLeft) playerX -= 7;
+  if (moveRight) playerX += 7;
+
+  playerX = Math.max(0, Math.min(game.clientWidth-player.offsetWidth, playerX));
+  player.style.left = playerX + "px";
 
   distance += 0.1;
   scoreEl.textContent = Math.floor(distance) + "m";
+  heartsEl.textContent = "❤️".repeat(lives);
 
-  if (Math.floor(distance) % 100 === 0) {
-    speed = 4 + Math.floor(distance / 100);
-  }
-
-  const interval = 350 + Math.random() * 250;
-  if (timestamp - lastObstacleTime > interval) {
+  if (t - lastObstacle > 400) {
     createObstacle();
-    lastObstacleTime = timestamp;
+    lastObstacle = t;
   }
 
   const p = player.getBoundingClientRect();
 
-  obstacles.forEach((o, i) => {
+  obstacles.forEach((o,i)=>{
     o.y += speed;
     o.el.style.top = o.y + "px";
-
     const r = o.el.getBoundingClientRect();
-    const hit = 8;
 
-    if (
-      p.left + hit < r.right - hit &&
-      p.right - hit > r.left + hit &&
-      p.top + hit < r.bottom - hit &&
-      p.bottom - hit > r.top + hit
-    ) {
+    if (!invincible &&
+        p.left<r.right && p.right>r.left &&
+        p.top<r.bottom && p.bottom>r.top) {
+
       lives--;
+      startInvincible();
       o.el.remove();
-      obstacles.splice(i, 1);
+      obstacles.splice(i,1);
 
-      if (lives <= 0) {
-        running = false;
-        finalScoreEl.textContent = Math.floor(distance);
-        checkReward();
-        gameoverEl.style.display = "flex";
+      if (lives<=0) {
+        running=false;
+        bgm.pause();
+        finalScoreEl.textContent=Math.floor(distance);
+        unlockRewards(Math.floor(distance));
+        gameoverEl.style.display="flex";
       }
     }
 
-    if (o.y > game.clientHeight + 80) {
+    if (o.y>game.clientHeight+80) {
       o.el.remove();
-      obstacles.splice(i, 1);
+      obstacles.splice(i,1);
     }
   });
 
-  checkReward();
   requestAnimationFrame(loop);
 }
 
