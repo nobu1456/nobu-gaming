@@ -6,7 +6,7 @@
 <title>Game Browser</title>
 
 <style>
-/* ===== ページ中央に収める ===== */
+/* ===== ページ全体 ===== */
 body {
   margin: 0;
   background: #111;
@@ -14,9 +14,11 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  overflow: hidden;
+  color: #fff;
 }
 
-/* ===== ゲーム画面 ===== */
+/* ===== ゲーム画面（レスポンシブ） ===== */
 #game {
   position: relative;
   width: min(100vw, 1200px);
@@ -28,12 +30,11 @@ body {
 /* ===== プレイヤー ===== */
 #player {
   position: absolute;
-  bottom: 48px;
+  bottom: 40px;
   width: 132px;
   height: 132px;
   background: url("player.png") no-repeat center / contain;
-  left: 50%;
-  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 /* ===== 敵 ===== */
@@ -49,28 +50,29 @@ body {
 
 /* ===== スコア ===== */
 #score {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 16px;
-  z-index: 10;
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  font-size: 18px;
+  z-index: 100;
 }
 
 /* ===== GAME OVER ===== */
 #gameover {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(0,0,0,.85);
   display: none;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  z-index: 200;
 }
 
 #gameover button {
   margin: 6px;
-  padding: 10px 16px;
-  font-size: 15px;
+  padding: 10px 18px;
+  font-size: 16px;
 }
 </style>
 </head>
@@ -79,27 +81,28 @@ body {
 
 <div id="game">
   <div id="player"></div>
-  <div id="score">0m</div>
+</div>
 
-  <div id="gameover">
-    <h2>GAME OVER</h2>
-    <p>距離：<span id="finalScore"></span>m</p>
+<div id="score">0m</div>
 
-    <button onclick="location.reload()">RETRY</button>
-    <button onclick="location.href='reward.html'">景品を見る</button>
-    <button onclick="location.href='game-start.html'">ホームに戻る</button>
-  </div>
+<div id="gameover">
+  <h2>GAME OVER</h2>
+  <p>距離：<span id="finalScore"></span>m</p>
+  <button onclick="location.reload()">RETRY</button>
+  <button onclick="location.href='reward.html'">景品を見る</button>
+  <button onclick="location.href='game-start.html'">ホームに戻る</button>
 </div>
 
 <script>
-/* ===== 変数 ===== */
+/* ===== DOM ===== */
 const game = document.getElementById("game");
 const player = document.getElementById("player");
 const scoreEl = document.getElementById("score");
 const gameoverEl = document.getElementById("gameover");
 const finalScoreEl = document.getElementById("finalScore");
 
-let playerX = game.clientWidth / 2;
+/* ===== 状態 ===== */
+let playerX = 0;
 let speed = 4;
 let distance = 0;
 let lives = 3;
@@ -107,41 +110,44 @@ let obstacles = [];
 let running = true;
 let lastObstacleTime = 0;
 
-const unlocked = new Set();
+/* ===== 起動時初期化（超重要） ===== */
+window.addEventListener("load", () => {
+  playerX = game.clientWidth / 2 - player.offsetWidth / 2;
+  player.style.left = playerX + "px";
+});
 
-/* ===== キーボード操作 ===== */
+/* ===== キー入力 ===== */
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
 /* ===== 敵生成 ===== */
 function createObstacle() {
+  if (!running) return;
+
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
+  const enemy =
+    Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
   obs.style.backgroundImage = `url("${enemy}")`;
 
-  obs.style.left = Math.random() * (game.clientWidth - 56) + "px";
+  const margin = 40;
+  obs.style.left =
+    margin + Math.random() * (game.clientWidth - 56 - margin * 2) + "px";
+
   obs.style.top = "-60px";
 
   game.appendChild(obs);
   obstacles.push({ el: obs, y: -60 });
 }
 
-/* ===== 報酬チェック ===== */
+/* ===== 報酬チェック（共通） ===== */
 function checkReward() {
   const best = Math.floor(distance);
   const saved = Number(localStorage.getItem("bestDistance") || 0);
-
   if (best > saved) {
     localStorage.setItem("bestDistance", best);
-  }
-
-  const milestone = Math.floor(best / 500) * 500;
-  if (milestone >= 500 && !unlocked.has(milestone)) {
-    unlocked.add(milestone);
-    console.log("Reward unlocked:", milestone);
   }
 }
 
@@ -149,25 +155,33 @@ function checkReward() {
 function loop(timestamp) {
   if (!running) return;
 
-  if (keys["ArrowLeft"] || keys["a"]) playerX -= 6;
-  if (keys["ArrowRight"] || keys["d"]) playerX += 6;
+  /* プレイヤー移動 */
+  if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
+  if (keys["ArrowRight"] || keys["d"]) playerX += 7;
 
-  playerX = Math.max(0, Math.min(game.clientWidth - player.offsetWidth, playerX));
+  playerX = Math.max(
+    0,
+    Math.min(game.clientWidth - player.offsetWidth, playerX)
+  );
   player.style.left = playerX + "px";
 
+  /* 距離 */
   distance += 0.1;
   scoreEl.textContent = Math.floor(distance) + "m";
 
+  /* 難易度 */
   if (Math.floor(distance) % 100 === 0) {
     speed = 4 + Math.floor(distance / 100);
   }
 
+  /* 敵生成 */
   const interval = 350 + Math.random() * 250;
   if (timestamp - lastObstacleTime > interval) {
     createObstacle();
     lastObstacleTime = timestamp;
   }
 
+  /* 当たり判定 */
   const p = player.getBoundingClientRect();
 
   obstacles.forEach((o, i) => {
@@ -175,7 +189,7 @@ function loop(timestamp) {
     o.el.style.top = o.y + "px";
 
     const r = o.el.getBoundingClientRect();
-    const hit = 8;
+    const hit = 10;
 
     if (
       p.left + hit < r.right - hit &&
