@@ -136,7 +136,7 @@ function createObstacle() {
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const enemy = Math.random() < 0.5 ? "enemy1.png" : "enemy2.png";
+  const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
   obs.style.backgroundImage = `url("${enemy}")`;
 
   obs.style.left = Math.random() * (game.clientWidth - 56) + "px";
