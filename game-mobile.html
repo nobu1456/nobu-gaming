@@ -6,8 +6,11 @@
 <title>Game Mobile</title>
 
 <style>
-body {
+/* ===== 基本 ===== */
+html, body {
   margin: 0;
+  width: 100%;
+  height: 100%;
   background: #000;
   overflow: hidden;
 }
@@ -20,7 +23,7 @@ body {
   touch-action: none;
 }
 
-/* UI */
+/* ===== UI ===== */
 #ui {
   position: absolute;
   top: 10px;
@@ -32,10 +35,15 @@ body {
   pointer-events: none;
 }
 
-#hearts { font-size: 26px; }
-#score { font-size: 18px; }
+#hearts {
+  font-size: 26px;
+}
 
-/* Player */
+#score {
+  font-size: 18px;
+}
+
+/* ===== プレイヤー ===== */
 #player {
   position: absolute;
   bottom: 48px;
@@ -45,40 +53,43 @@ body {
   z-index: 10;
 }
 
-/* Enemy */
+/* ===== 敵 ===== */
 .obstacle {
   position: absolute;
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   top: -60px;
-  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  background-size: contain;
+  z-index: 8;
 }
 
-/* Controls */
+/* ===== 操作ボタン ===== */
 #controls {
   position: absolute;
-  bottom: 20px;
+  bottom: 16px;
   left: 0;
   right: 0;
   display: flex;
   justify-content: space-between;
-  padding: 0 20px;
-  z-index: 30;
+  padding: 0 16px;
+  z-index: 100;
+  pointer-events: auto;
 }
 
 #controls button {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   font-size: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,.15);
+  background: rgba(255,255,255,.25);
   color: #fff;
+  user-select: none;
 }
 
-/* Game Over */
+/* ===== GAME OVER ===== */
 #gameover {
   position: fixed;
   inset: 0;
@@ -88,7 +99,13 @@ body {
   align-items: center;
   flex-direction: column;
   color: #fff;
-  z-index: 50;
+  z-index: 200;
+}
+
+#gameover button {
+  margin: 6px;
+  padding: 10px 18px;
+  font-size: 16px;
 }
 </style>
 </head>
@@ -120,6 +137,7 @@ body {
 <audio id="bgm" src="bgm.mp3" loop></audio>
 
 <script>
+/* ===== DOM ===== */
 const game = document.getElementById("game");
 const player = document.getElementById("player");
 const heartsEl = document.getElementById("hearts");
@@ -128,117 +146,138 @@ const gameoverEl = document.getElementById("gameover");
 const finalScoreEl = document.getElementById("finalScore");
 const bgm = document.getElementById("bgm");
 
+const leftBtn = document.getElementById("left");
+const rightBtn = document.getElementById("right");
+
+/* ===== 状態 ===== */
 let playerX = 0;
-let speed = 4;
+let speed = 3.0;               // スマホ用に控えめ
 let distance = 0;
 let lives = 3;
 let running = true;
 let obstacles = [];
 let lastObstacle = 0;
 
-let moveLeft = false;
-let moveRight = false;
-
 /* 無敵 */
 let invincible = false;
-let blinkInterval = null;
+let blinkTimer = null;
+
+/* 操作 */
+let moveLeft = false;
+let moveRight = false;
 
 /* 初期位置 */
 playerX = game.clientWidth / 2 - player.offsetWidth / 2;
 player.style.left = playerX + "px";
 
-/* BGM（初回タップ） */
+/* BGM（初回タップで解禁） */
 document.body.addEventListener("touchstart", () => {
   bgm.play().catch(()=>{});
 }, { once:true });
 
-/* Controls */
-left.addEventListener("touchstart", () => moveLeft = true);
-left.addEventListener("touchend", () => moveLeft = false);
-right.addEventListener("touchstart", () => moveRight = true);
-right.addEventListener("touchend", () => moveRight = false);
+/* 操作ボタン */
+leftBtn.addEventListener("touchstart", () => moveLeft = true);
+leftBtn.addEventListener("touchend", () => moveLeft = false);
+rightBtn.addEventListener("touchstart", () => moveRight = true);
+rightBtn.addEventListener("touchend", () => moveRight = false);
 
-/* Enemy */
+/* 敵生成 */
 function createObstacle() {
   const o = document.createElement("div");
   o.className = "obstacle";
   o.style.backgroundImage =
-    `url("${Math.random()<.5?"enemy1ver2.png":"enemy2ver2.png"}")`;
-  o.style.left = Math.random() * (game.clientWidth - 56) + "px";
+    `url("${Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png"}")`;
+  o.style.left = Math.random() * (game.clientWidth - 48) + "px";
   game.appendChild(o);
-  obstacles.push({ el:o, y:-60 });
+  obstacles.push({ el: o, y: -60 });
 }
 
 /* 無敵処理 */
 function startInvincible() {
   invincible = true;
   let visible = true;
-  blinkInterval = setInterval(() => {
+
+  blinkTimer = setInterval(() => {
     visible = !visible;
     player.style.opacity = visible ? "1" : "0.3";
   }, 120);
 
   setTimeout(() => {
     invincible = false;
-    clearInterval(blinkInterval);
+    clearInterval(blinkTimer);
     player.style.opacity = "1";
   }, 1200);
 }
 
-/* 報酬 */
+/* 報酬開放 */
 function unlockRewards(d) {
-  [500,1000,1500,2000].forEach(r=>{
-    if (d>=r) localStorage.setItem(`reward_${r}`,"1");
+  [500,1000,1500,2000].forEach(r => {
+    if (d >= r) localStorage.setItem(`reward_${r}`, "1");
   });
 }
 
-/* Loop */
+/* ===== メインループ ===== */
 function loop(t) {
   if (!running) return;
 
   if (moveLeft) playerX -= 7;
   if (moveRight) playerX += 7;
 
-  playerX = Math.max(0, Math.min(game.clientWidth-player.offsetWidth, playerX));
+  playerX = Math.max(
+    0,
+    Math.min(game.clientWidth - player.offsetWidth, playerX)
+  );
   player.style.left = playerX + "px";
 
   distance += 0.1;
   scoreEl.textContent = Math.floor(distance) + "m";
   heartsEl.textContent = "❤️".repeat(lives);
 
-  if (t - lastObstacle > 400) {
+  /* スピード調整 */
+  if (Math.floor(distance) % 150 === 0) {
+    speed += 0.4;
+  }
+
+  /* 敵生成（スマホ用に間隔広め） */
+  if (t - lastObstacle > 700) {
     createObstacle();
     lastObstacle = t;
   }
 
   const p = player.getBoundingClientRect();
 
-  obstacles.forEach((o,i)=>{
+  obstacles.forEach((o, i) => {
     o.y += speed;
     o.el.style.top = o.y + "px";
+
     const r = o.el.getBoundingClientRect();
+    const hitPlayer = 26;
+    const hitEnemy = 12;
 
-    if (!invincible &&
-        p.left<r.right && p.right>r.left &&
-        p.top<r.bottom && p.bottom>r.top) {
-
+    if (
+      !invincible &&
+      p.left + hitPlayer < r.right - hitEnemy &&
+      p.right - hitPlayer > r.left + hitEnemy &&
+      p.top + hitPlayer < r.bottom - hitEnemy &&
+      p.bottom - hitPlayer > r.top + hitEnemy
+    ) {
       lives--;
       startInvincible();
       o.el.remove();
-      obstacles.splice(i,1);
+      obstacles.splice(i, 1);
 
-      if (lives<=0) {
-        running=false;
+      if (lives <= 0) {
+        running = false;
         bgm.pause();
-        finalScoreEl.textContent=Math.floor(distance);
+        finalScoreEl.textContent = Math.floor(distance);
         unlockRewards(Math.floor(distance));
-        gameoverEl.style.display="flex";
+        gameoverEl.style.display = "flex";
       }
     }
 
-    if (o.y>game.clientHeight+80) {
+    if (o.y > game.clientHeight + 80) {
       o.el.remove();
-      obstacles.splice(i,1);
+      obstacles.splice(i, 1);
     }
   });
 
