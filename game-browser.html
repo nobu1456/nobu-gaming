@@ -68,12 +68,6 @@ body {
   z-index: 200;
 }
 
-#gameover button {
-  margin: 6px;
-  padding: 10px 18px;
-  font-size: 16px;
-}
-
 #rewardNotice {
   color: gold;
   font-weight: bold;
@@ -96,7 +90,7 @@ body {
 <div id="gameover">
   <h2>GAME OVER</h2>
   <p>距離：<span id="finalDistance"></span>m</p>
-  <p id="rewardNotice">🎁 景品解放！</p>
+  <p id="rewardNotice"></p>
   <button onclick="location.reload()">RETRY</button>
   <button onclick="location.href='reward.html'">景品を見る</button>
   <button onclick="location.href='game-start.html'">ホームに戻る</button>
@@ -122,16 +116,15 @@ let obstacles = [];
 let running = true;
 let lastObstacleTime = 0;
 
-/* 無敵時間 */
 let invincible = false;
 let invincibleStart = 0;
 
-/* 段階景品 */
+/* reward.html に合わせたキー */
 const rewards = [
-  { dist: 500, key: "reward500", shown: false },
-  { dist: 1000, key: "reward1000", shown: false },
-  { dist: 1500, key: "reward1500", shown: false },
-  { dist: 2000, key: "reward2000", shown: false }
+  { dist: 500,  key: "reward_500",  shown: false },
+  { dist: 1000, key: "reward_1000", shown: false },
+  { dist: 1500, key: "reward_1500", shown: false },
+  { dist: 2000, key: "reward_2000", shown: false }
 ];
 
 window.addEventListener("load", () => {
@@ -152,9 +145,7 @@ function createObstacle() {
   const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
   obs.style.backgroundImage = `url("${enemy}")`;
 
-  const margin = 40;
-  obs.style.left = margin + Math.random() * (game.clientWidth - 56 - margin*2) + "px";
-
+  obs.style.left = 40 + Math.random() * (game.clientWidth - 56 - 80) + "px";
   game.appendChild(obs);
   obstacles.push({ el: obs, y: -60 });
 }
@@ -167,22 +158,18 @@ function updateUI() {
 function loop(ts) {
   if (!running) return;
 
-  // プレイヤー移動
   if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
   if (keys["ArrowRight"] || keys["d"]) playerX += 7;
   playerX = Math.max(0, Math.min(game.clientWidth - player.offsetWidth, playerX));
   player.style.left = playerX + "px";
 
-  // 距離
   distance += 0.1;
 
-  // スピードUP
   if (Math.floor(distance) % 100 === 0) {
     speed = 4 + Math.floor(distance / 100);
   }
 
-  // 敵生成
-  if (ts - lastObstacleTime > 350 + Math.random()*250) {
+  if (ts - lastObstacleTime > 350 + Math.random() * 250) {
     createObstacle();
     lastObstacleTime = ts;
   }
@@ -192,6 +179,7 @@ function loop(ts) {
   obstacles.forEach((o, i) => {
     o.y += speed;
     o.el.style.top = o.y + "px";
+
     const r = o.el.getBoundingClientRect();
     const hit = 10;
 
@@ -199,28 +187,27 @@ function loop(ts) {
         p.left + hit < r.right - hit &&
         p.right - hit > r.left + hit &&
         p.top + hit < r.bottom - hit &&
-        p.bottom - hit > r.top + hit
-    ) {
+        p.bottom - hit > r.top + hit) {
+
       lives--;
       invincible = true;
       invincibleStart = ts;
       player.style.opacity = "0.5";
 
       o.el.remove();
-      obstacles.splice(i,1);
+      obstacles.splice(i, 1);
 
       if (lives <= 0) {
         running = false;
         bgm.pause();
         finalDistanceEl.textContent = Math.floor(distance);
 
-        // 景品解放段階判定
-        rewards.forEach(r => {
-          if (distance >= r.dist && !r.shown) {
-            localStorage.setItem(r.key, "true");
-            rewardNotice.textContent = `🎁 ${r.dist}mで景品解放！`;
+        rewards.forEach(rw => {
+          if (distance >= rw.dist && !rw.shown) {
+            localStorage.setItem(rw.key, "true");
+            rewardNotice.textContent = `🎁 ${rw.dist}mで景品解放！`;
             rewardNotice.style.display = "block";
-            r.shown = true;
+            rw.shown = true;
           }
         });
 
@@ -230,11 +217,10 @@ function loop(ts) {
 
     if (o.y > game.clientHeight + 80) {
       o.el.remove();
-      obstacles.splice(i,1);
+      obstacles.splice(i, 1);
     }
   });
 
-  // 無敵解除
   if (invincible && ts - invincibleStart > 1000) {
     invincible = false;
     player.style.opacity = "1";
