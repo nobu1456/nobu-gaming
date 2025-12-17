@@ -10,13 +10,19 @@ let speed = 4;
 let distance = 0;
 let lives = 3;
 let obstacles = [];
-let running = false;
+let running = true;   // ★ 最初から true
 let lastObstacleTime = 0;
 
 const keys = {};
 
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
+
+window.addEventListener("load", () => {
+  playerX = (game.clientWidth - player.offsetWidth) / 2;
+  player.style.left = playerX + "px";
+  requestAnimationFrame(loop);
+});
 
 function createObstacle() {
   const obs = document.createElement("div");
@@ -58,7 +64,7 @@ function loop(ts) {
   distance += 0.15;
   speed = 4 + Math.floor(distance / 100);
 
-  // 障害物生成
+  // 敵生成
   if (ts - lastObstacleTime > 300) {
     createObstacle();
     lastObstacleTime = ts;
@@ -99,13 +105,3 @@ function loop(ts) {
   updateUI();
   requestAnimationFrame(loop);
 }
-
-/* ===== 起動処理 ===== */
-window.addEventListener("load", () => {
-  // サイズ確定後に初期化
-  playerX = (game.clientWidth - player.offsetWidth) / 2;
-  player.style.left = playerX + "px";
-
-  running = true;
-  requestAnimationFrame(loop);
-});
