@@ -18,13 +18,14 @@ body {
   overflow: hidden;
 }
 
-/* 背景を見やすくする暗幕 */
-#game::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  z-index: 1;
+#game {
+  position: relative;
+  width: min(100vw, 1200px);
+  height: min(100vh, 800px);
+  background:
+    linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+    url("space-bg.png") center / cover no-repeat;
+  overflow: hidden;
 }
 
 /* ===== UI ===== */
