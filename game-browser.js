@@ -10,7 +10,7 @@ let speed = 4;
 let distance = 0;
 let lives = 3;
 let obstacles = [];
-let running = true;
+let running = false;
 let lastObstacleTime = 0;
 
 const keys = {};
@@ -18,23 +18,19 @@ const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-window.addEventListener("load", () => {
-  playerX = game.clientWidth / 2 - player.offsetWidth / 2;
-  player.style.left = playerX + "px";
-});
-
 function createObstacle() {
   const obs = document.createElement("div");
   obs.className = "obstacle";
 
-  const img =
-    Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
+  const img = Math.random() < 0.5
+    ? "enemy1ver2.png"
+    : "enemy2ver2.png";
 
   obs.style.backgroundImage = `url("${img}")`;
 
   const margin = 40;
-  obs.style.left =
-    margin + Math.random() * (game.clientWidth - 64 - margin * 2) + "px";
+  const maxX = game.clientWidth - 64 - margin * 2;
+  obs.style.left = margin + Math.random() * maxX + "px";
 
   game.appendChild(obs);
   obstacles.push({ el: obs, y: -80 });
@@ -48,6 +44,7 @@ function updateUI() {
 function loop(ts) {
   if (!running) return;
 
+  // プレイヤー移動
   if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
   if (keys["ArrowRight"] || keys["d"]) playerX += 7;
 
@@ -57,11 +54,11 @@ function loop(ts) {
   );
   player.style.left = playerX + "px";
 
+  // 距離とスピード
   distance += 0.15;
+  speed = 4 + Math.floor(distance / 100);
 
-  const level = Math.floor(distance / 100);
-  speed = 4 + level;
-
+  // 障害物生成
   if (ts - lastObstacleTime > 300) {
     createObstacle();
     lastObstacleTime = ts;
@@ -103,4 +100,12 @@ function loop(ts) {
   requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(loop);
+/* ===== 起動処理 ===== */
+window.addEventListener("load", () => {
+  // サイズ確定後に初期化
+  playerX = (game.clientWidth - player.offsetWidth) / 2;
+  player.style.left = playerX + "px";
+
+  running = true;
+  requestAnimationFrame(loop);
+});
