@@ -13,7 +13,7 @@ body {
   position: relative;
   width: min(100vw, 1200px);
   height: min(100vh, 800px);
-  background: #000;
+  background: url("space-bg.png") center / cover no-repeat;
   overflow: hidden;
 }
 
