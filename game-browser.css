@@ -10,12 +10,9 @@ body {
 }
 
 #game {
-  position: relative;
-  width: min(100vw, 1200px);
-  height: min(100vh, 800px);
-  background: url("space-bg.png") center / cover no-repeat;
-  overflow: hidden;
+  background: red;
 }
+
 
 #ui {
   position: absolute;
