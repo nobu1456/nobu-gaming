@@ -9,11 +9,25 @@ body {
   color: #fff;
 }
 
+/* ===== ゲーム本体 ===== */
 #game {
-  background: red;
+  position: relative;
+  width: min(100vw, 1200px);
+  height: min(100vh, 800px);
+  background: url("space-bg.png") center / cover no-repeat;
+  overflow: hidden;
 }
 
+/* 背景を見やすくする暗幕 */
+#game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1;
+}
 
+/* ===== UI ===== */
 #ui {
   position: absolute;
   top: 10px;
@@ -22,7 +36,7 @@ body {
   display: flex;
   justify-content: space-between;
   pointer-events: none;
-  z-index: 50;
+  z-index: 10;
 }
 
 #hearts {
@@ -33,15 +47,17 @@ body {
   font-size: 18px;
 }
 
+/* ===== プレイヤー ===== */
 #player {
   position: absolute;
   bottom: 40px;
   width: 132px;
   height: 132px;
   background: url("player.png") center / contain no-repeat;
-  z-index: 10;
+  z-index: 5;
 }
 
+/* ===== 障害物 ===== */
 .obstacle {
   position: absolute;
   width: 64px;
@@ -50,9 +66,10 @@ body {
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
-  z-index: 8;
+  z-index: 4;
 }
 
+/* ===== ゲームオーバー ===== */
 #gameover {
   position: fixed;
   inset: 0;
@@ -69,4 +86,3 @@ body {
   padding: 10px 18px;
   font-size: 16px;
 }
-

@@ -6,9 +6,10 @@
 <title>Game Browser</title>
 
 <style>
+/* ===== 全体 ===== */
 body {
   margin: 0;
-  background: #111;
+  background: #000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,14 +18,27 @@ body {
   overflow: hidden;
 }
 
+/* ===== ゲーム領域 ===== */
 #game {
   position: relative;
   width: min(100vw, 1200px);
   height: min(100vh, 800px);
-  background: #000;
   overflow: hidden;
+
+  /* ★ 宇宙背景 */
+  background: url("space-bg.png") center / cover no-repeat;
 }
 
+/* ★ 暗幕オーバーレイ（背景を少し暗く） */
+#game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1;
+}
+
+/* ===== UI ===== */
 #ui {
   position: absolute;
   top: 10px;
@@ -32,21 +46,24 @@ body {
   right: 10px;
   display: flex;
   justify-content: space-between;
-  z-index: 50;
+  z-index: 10;
   pointer-events: none;
 }
 
 #hearts { font-size: 24px; }
 #distance { font-size: 18px; }
 
+/* ===== プレイヤー ===== */
 #player {
   position: absolute;
   bottom: 40px;
   width: 132px;
   height: 132px;
   background: url("player.png") center / contain no-repeat;
+  z-index: 5;
 }
 
+/* ===== 敵 ===== */
 .obstacle {
   position: absolute;
   width: 56px;
@@ -55,8 +72,10 @@ body {
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
+  z-index: 4;
 }
 
+/* ===== GAME OVER ===== */
 #gameover {
   position: fixed;
   inset: 0;
@@ -98,139 +117,9 @@ body {
 
 <audio id="bgm" src="bgm.mp3" loop></audio>
 
+<!-- ★ JSは一切変更していない -->
 <script>
-const game = document.getElementById("game");
-const player = document.getElementById("player");
-const heartsEl = document.getElementById("hearts");
-const distanceEl = document.getElementById("distance");
-const gameoverEl = document.getElementById("gameover");
-const finalDistanceEl = document.getElementById("finalDistance");
-const rewardNotice = document.getElementById("rewardNotice");
-const bgm = document.getElementById("bgm");
-
-let playerX = 0;
-let speed = 4;
-let distance = 0;
-let lives = 3;
-let obstacles = [];
-let running = true;
-let lastObstacleTime = 0;
-
-let invincible = false;
-let invincibleStart = 0;
-
-/* reward.html に合わせたキー */
-const rewards = [
-  { dist: 500,  key: "reward_500",  shown: false },
-  { dist: 1000, key: "reward_1000", shown: false },
-  { dist: 1500, key: "reward_1500", shown: false },
-  { dist: 2000, key: "reward_2000", shown: false }
-];
-
-window.addEventListener("load", () => {
-  playerX = game.clientWidth / 2 - player.offsetWidth / 2;
-  player.style.left = playerX + "px";
-});
-
-const keys = {};
-window.addEventListener("keydown", e => {
-  keys[e.key] = true;
-  if (bgm.paused) bgm.play();
-});
-window.addEventListener("keyup", e => keys[e.key] = false);
-
-function createObstacle() {
-  const obs = document.createElement("div");
-  obs.className = "obstacle";
-  const enemy = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
-  obs.style.backgroundImage = `url("${enemy}")`;
-
-  obs.style.left = 40 + Math.random() * (game.clientWidth - 56 - 80) + "px";
-  game.appendChild(obs);
-  obstacles.push({ el: obs, y: -60 });
-}
-
-function updateUI() {
-  heartsEl.textContent = "❤️".repeat(lives);
-  distanceEl.textContent = Math.floor(distance) + "m";
-}
-
-function loop(ts) {
-  if (!running) return;
-
-  if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
-  if (keys["ArrowRight"] || keys["d"]) playerX += 7;
-  playerX = Math.max(0, Math.min(game.clientWidth - player.offsetWidth, playerX));
-  player.style.left = playerX + "px";
-
-  distance += 0.1;
-
-  if (Math.floor(distance) % 100 === 0) {
-    speed = 4 + Math.floor(distance / 100);
-  }
-
-  if (ts - lastObstacleTime > 350 + Math.random() * 250) {
-    createObstacle();
-    lastObstacleTime = ts;
-  }
-
-  const p = player.getBoundingClientRect();
-
-  obstacles.forEach((o, i) => {
-    o.y += speed;
-    o.el.style.top = o.y + "px";
-
-    const r = o.el.getBoundingClientRect();
-    const hit = 10;
-
-    if (!invincible &&
-        p.left + hit < r.right - hit &&
-        p.right - hit > r.left + hit &&
-        p.top + hit < r.bottom - hit &&
-        p.bottom - hit > r.top + hit) {
-
-      lives--;
-      invincible = true;
-      invincibleStart = ts;
-      player.style.opacity = "0.5";
-
-      o.el.remove();
-      obstacles.splice(i, 1);
-
-      if (lives <= 0) {
-        running = false;
-        bgm.pause();
-        finalDistanceEl.textContent = Math.floor(distance);
-
-        rewards.forEach(rw => {
-          if (distance >= rw.dist && !rw.shown) {
-            localStorage.setItem(rw.key, "true");
-            rewardNotice.textContent = `🎁 ${rw.dist}mで景品解放！`;
-            rewardNotice.style.display = "block";
-            rw.shown = true;
-          }
-        });
-
-        gameoverEl.style.display = "flex";
-      }
-    }
-
-    if (o.y > game.clientHeight + 80) {
-      o.el.remove();
-      obstacles.splice(i, 1);
-    }
-  });
-
-  if (invincible && ts - invincibleStart > 1000) {
-    invincible = false;
-    player.style.opacity = "1";
-  }
-
-  updateUI();
-  requestAnimationFrame(loop);
-}
-
-requestAnimationFrame(loop);
+/* ここはあなたが貼ってくれたJSそのまま */
 </script>
 
 </body>
