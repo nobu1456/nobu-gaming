@@ -4,7 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Browser</title>
-<link rel="stylesheet" href="style.css">
+<style>
+  body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; overflow: hidden; font-family: sans-serif; }
+  #game { position: relative; width: min(100vw, 1200px); height: min(100vh, 800px); overflow: hidden; background: #000b1e url("space-bg.png") center / cover no-repeat; }
+  #game::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.35); z-index: 1; }
+  #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
+  #hearts { font-size: 24px; }
+  #distance { font-size: 18px; }
+  #player { position: absolute; bottom: 40px; width: 132px; height: 132px; background: url("player.png") center / contain no-repeat; z-index: 5; }
+  .obstacle { position: absolute; width: 56px; height: 56px; top: -60px; background-repeat: no-repeat; background-position: center; background-size: contain; z-index: 4; background-color: rgba(255,0,0,0.2); }
+  #gameover { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 200; }
+  #gameover button { margin: 6px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
+  #rewardNotice { color: gold; font-weight: bold; display: none; margin: 6px 0; }
+</style>
 </head>
 <body>
 
@@ -20,9 +32,9 @@
   <h2>GAME OVER</h2>
   <p>距離：<span id="finalDistance"></span>m</p>
   <p id="rewardNotice"></p>
-  <button onclick="location.reload()">RETRY</button>
-  <button onclick="location.href='reward.html'">景品を見る</button>
-  <button onclick="location.href='game-start.html'">ホームに戻る</button>
+  <button onclick="window.location.reload()">RETRY</button>
+  <button onclick="window.location.href='reward.html'">景品を見る</button>
+  <button onclick="window.location.href='game-start.html'">ホームに戻る</button>
 </div>
 
 <audio id="bgm" src="bgm.mp3" loop></audio>
