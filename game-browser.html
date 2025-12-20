@@ -11,8 +11,23 @@
   #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
   #hearts { font-size: 24px; }
   #distance { font-size: 18px; }
-  #player { position: absolute; bottom: 40px; width: 132px; height: 132px; background: url("player.png") center / contain no-repeat; z-index: 5; }
-  .obstacle { position: absolute; width: 56px; height: 56px; top: -60px; background-repeat: no-repeat; background-position: center; background-size: contain; z-index: 4; background-color: rgba(255,0,0,0.2); }
+  
+  #player { 
+    position: absolute; bottom: 40px; width: 132px; height: 132px; 
+    background: url("player.png") center / contain no-repeat; z-index: 5; 
+  }
+
+  /* 無敵状態の点滅アニメーション */
+  .invincible { animation: blink 0.1s infinite; }
+  @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
+
+  .obstacle { 
+    position: absolute; width: 56px; height: 56px; top: -60px; 
+    background-repeat: no-repeat; background-position: center; 
+    background-size: contain; z-index: 4; 
+    /* 赤い枠や背景色はすべて削除しました */
+  }
+
   #gameover { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 200; }
   #gameover button { margin: 6px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
   #rewardNotice { color: gold; font-weight: bold; display: none; margin: 6px 0; }
@@ -38,7 +53,6 @@
 </div>
 
 <audio id="bgm" src="bgm.mp3" loop></audio>
-
 <script src="game-browser.js"></script>
 </body>
 </html>

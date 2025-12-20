@@ -13,6 +13,7 @@
     let obstacles = [];
     let running = true;
     let lastObstacleTime = 0;
+    let isInvincible = false; // 無敵フラグ
 
     const keys = {};
 
@@ -28,12 +29,8 @@
     function createObstacle(ts) {
         const obs = document.createElement("div");
         obs.className = "obstacle";
-        
-        // 画像のランダム選択
         const img = Math.random() < 0.5 ? "enemy1ver2.png" : "enemy2ver2.png";
         obs.style.backgroundImage = `url("${img}")`;
-        
-        // ★ 以前追加していた赤い背景色 (background-color) を削除しました
 
         const margin = 40;
         const maxX = game.clientWidth - 56 - margin * 2;
@@ -42,6 +39,15 @@
         game.appendChild(obs);
         obstacles.push({ el: obs, y: -80 });
         lastObstacleTime = ts;
+    }
+
+    function triggerInvincible() {
+        isInvincible = true;
+        player.classList.add("invincible"); // CSSのアニメーションを適用
+        setTimeout(() => {
+            isInvincible = false;
+            player.classList.remove("invincible");
+        }, 1200); // 1.2秒間無敵
     }
 
     function updateUI() {
@@ -53,8 +59,8 @@
         if (!running) return;
 
         // プレイヤー移動
-        if (keys["ArrowLeft"] || keys["a"]) playerX -= 7;
-        if (keys["ArrowRight"] || keys["d"]) playerX += 7;
+        if (keys["ArrowLeft"] || keys["a"]) playerX -= 8;
+        if (keys["ArrowRight"] || keys["d"]) playerX += 8;
 
         playerX = Math.max(0, Math.min(game.clientWidth - player.offsetWidth, playerX));
         player.style.left = playerX + "px";
@@ -77,13 +83,15 @@
 
             const r = o.el.getBoundingClientRect();
             
-            // 当たり判定の絞り込み（12px分内側で判定）
-            const hit = 12;
+            // 当たり判定の絞り込み（画像の透明部分を考慮）
+            const hitX = 35; 
+            const hitY = 20;
 
-            if (p.left + hit < r.right - hit &&
-                p.right - hit > r.left + hit &&
-                p.top + hit < r.bottom - hit &&
-                p.bottom - hit > r.top + hit) {
+            if (!isInvincible && // 無敵中でない場合のみ判定
+                p.left + hitX < r.right - hitX &&
+                p.right - hitX > r.left + hitX &&
+                p.top + hitY < r.bottom - hitY &&
+                p.bottom - hitY > r.top + hitY) {
                 
                 lives--;
                 updateUI();
@@ -95,6 +103,8 @@
                     running = false;
                     finalDistanceEl.textContent = Math.floor(distance);
                     gameoverEl.style.display = "flex";
+                } else {
+                    triggerInvincible(); // 無敵開始
                 }
                 continue;
             }
