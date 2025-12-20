@@ -1,39 +1,49 @@
+/* ===== 全体 ===== */
 body {
   margin: 0;
-  background: #111;
+  background: #000;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  overflow: hidden;
   color: #fff;
+  overflow: hidden;
   font-family: sans-serif;
 }
 
-/* ===== ゲーム本体 ===== */
+/* ===== ゲーム領域 ===== */
 #game {
   position: relative;
   width: min(100vw, 1200px);
   height: min(100vh, 800px);
-  background:
-    linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
-    url("space-bg.png") center / cover no-repeat;
   overflow: hidden;
+  /* ★ 宇宙背景 */
+  background: url("space-bg.png") center / cover no-repeat;
+  background-color: #000b1e; /* 画像がない時の予備 */
+}
+
+/* ★ 暗幕オーバーレイ */
+#game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1;
 }
 
 /* ===== UI ===== */
 #ui {
   position: absolute;
   top: 10px;
-  left: 12px;
-  right: 12px;
+  left: 10px;
+  right: 10px;
   display: flex;
   justify-content: space-between;
+  z-index: 10;
   pointer-events: none;
-  z-index: 50;
 }
 
-#hearts { font-size: 26px; }
+#hearts { font-size: 24px; }
 #distance { font-size: 18px; }
 
 /* ===== プレイヤー ===== */
@@ -43,33 +53,24 @@ body {
   width: 132px;
   height: 132px;
   background: url("player.png") center / contain no-repeat;
-  z-index: 10;
-  transition: opacity 0.1s;
+  background-color: rgba(0, 123, 255, 0.3); /* デバッグ用：画像がない時 */
+  z-index: 5;
 }
 
-/* 無敵状態の視覚効果 */
-.invincible {
-  animation: blink 0.2s infinite;
-}
-@keyframes blink {
-  0% { opacity: 0.2; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.2; }
-}
-
-/* ===== 障害物 ===== */
+/* ===== 敵 ===== */
 .obstacle {
   position: absolute;
-  width: 64px;
-  height: 64px;
-  top: -80px;
+  width: 56px;
+  height: 56px;
+  top: -60px;
+  background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  background-repeat: no-repeat;
-  z-index: 8;
+  background-color: rgba(255, 0, 0, 0.3); /* デバッグ用：画像がない時 */
+  z-index: 4;
 }
 
-/* ===== ゲームオーバー ===== */
+/* ===== GAME OVER ===== */
 #gameover {
   position: fixed;
   inset: 0;
@@ -91,6 +92,6 @@ body {
 #rewardNotice {
   color: gold;
   font-weight: bold;
-  margin: 10px 0;
   display: none;
+  margin: 6px 0;
 }
