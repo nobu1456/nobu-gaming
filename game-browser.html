@@ -1,101 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Browser</title>
-
-<style>
-/* ===== 全体 ===== */
-body {
-  margin: 0;
-  background: #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: #fff;
-  overflow: hidden;
-}
-
-/* ===== ゲーム領域 ===== */
-#game {
-  position: relative;
-  width: min(100vw, 1200px);
-  height: min(100vh, 800px);
-  overflow: hidden;
-
-  /* ★ 宇宙背景 */
-  background: url("space-bg.png") center / cover no-repeat;
-}
-
-/* ★ 暗幕オーバーレイ（背景を少し暗く） */
-#game::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  z-index: 1;
-}
-
-/* ===== UI ===== */
-#ui {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  display: flex;
-  justify-content: space-between;
-  z-index: 10;
-  pointer-events: none;
-}
-
-#hearts { font-size: 24px; }
-#distance { font-size: 18px; }
-
-/* ===== プレイヤー ===== */
-#player {
-  position: absolute;
-  bottom: 40px;
-  width: 132px;
-  height: 132px;
-  background: url("player.png") center / contain no-repeat;
-  z-index: 5;
-}
-
-/* ===== 敵 ===== */
-.obstacle {
-  position: absolute;
-  width: 56px;
-  height: 56px;
-  top: -60px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  z-index: 4;
-}
-
-/* ===== GAME OVER ===== */
-#gameover {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  z-index: 200;
-}
-
-#rewardNotice {
-  color: gold;
-  font-weight: bold;
-  display: none;
-  margin: 6px 0;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Browser</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div id="game">
